@@ -54,6 +54,11 @@
       "name": "Leg Extensions",
       "muscle": "Legs",
       "type": "weighted"
+    },
+    {
+      "name": "Calf Raises",
+      "muscle": "Legs",
+      "type": "weighted"
     }
   ],
   "history": [],
