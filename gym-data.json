@@ -29,6 +29,11 @@
       "name": "Deadlift",
       "muscle": "Full Body",
       "type": "weighted"
+    },
+    {
+      "name": "Overhead Press",
+      "muscle": "Shoulders",
+      "type": "weighted"
     }
   ],
   "history": [],
