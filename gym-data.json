@@ -1,5 +1,11 @@
 {
-  "exercises": [],
+  "exercises": [
+    {
+      "name": "Bench Press",
+      "muscle": "Chest",
+      "type": "weighted"
+    }
+  ],
   "history": [],
   "templates": []
 }
