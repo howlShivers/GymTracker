@@ -9,6 +9,11 @@
       "name": "Leg Press",
       "muscle": "Legs",
       "type": "weighted"
+    },
+    {
+      "name": "Lat Pull Down",
+      "muscle": "Back",
+      "type": "weighted"
     }
   ],
   "history": [],
