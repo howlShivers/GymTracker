@@ -69,6 +69,11 @@
       "name": "Walk/run",
       "muscle": "Cardio",
       "type": "cardio"
+    },
+    {
+      "name": "Stair Master",
+      "muscle": "Cardio",
+      "type": "cardio"
     }
   ],
   "history": [],
