@@ -4,6 +4,11 @@
       "name": "Bench Press",
       "muscle": "Chest",
       "type": "weighted"
+    },
+    {
+      "name": "Leg Press",
+      "muscle": "Legs",
+      "type": "weighted"
     }
   ],
   "history": [],
