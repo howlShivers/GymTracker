@@ -24,6 +24,11 @@
       "name": "Squat",
       "muscle": "Legs",
       "type": "weighted"
+    },
+    {
+      "name": "Deadlift",
+      "muscle": "Full Body",
+      "type": "weighted"
     }
   ],
   "history": [],
