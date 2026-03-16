@@ -19,6 +19,11 @@
       "name": "Row",
       "muscle": "Back",
       "type": "weighted"
+    },
+    {
+      "name": "Squat",
+      "muscle": "Legs",
+      "type": "weighted"
     }
   ],
   "history": [],
