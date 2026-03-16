@@ -34,6 +34,11 @@
       "name": "Overhead Press",
       "muscle": "Shoulders",
       "type": "weighted"
+    },
+    {
+      "name": "Bicep Curls",
+      "muscle": "Biceps",
+      "type": "weighted"
     }
   ],
   "history": [],
