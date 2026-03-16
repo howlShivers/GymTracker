@@ -44,6 +44,11 @@
       "name": "Tricep Extension",
       "muscle": "Triceps",
       "type": "weighted"
+    },
+    {
+      "name": "Leg Curls",
+      "muscle": "Legs",
+      "type": "weighted"
     }
   ],
   "history": [],
