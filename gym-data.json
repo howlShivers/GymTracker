@@ -64,6 +64,11 @@
       "name": "Hip Thrusts",
       "muscle": "Legs",
       "type": "weighted"
+    },
+    {
+      "name": "Walk/run",
+      "muscle": "Cardio",
+      "type": "cardio"
     }
   ],
   "history": [],
