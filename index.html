@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GYM TRACKER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --surface2: #1a1a1a;
+    --border: #2a2a2a;
+    --accent: #e8ff47;
+    --accent2: #ff6b35;
+    --text: #f0f0f0;
+    --text-dim: #888;
+    --red: #ff4444;
+    --green: #44ff88;
+    --radius: 4px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: rgba(10,10,10,0.95);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 4px;
+    color: var(--accent);
+  }
+
+  .sync-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .sync-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    transition: background 0.3s;
+  }
+  .sync-dot.online { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .sync-dot.syncing { background: var(--accent); animation: pulse 1s infinite; }
+  .sync-dot.error { background: var(--red); }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* NAV */
+  nav {
+    display: flex;
+    gap: 2px;
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+  }
+
+  .nav-btn {
+    background: none;
+    border: 1px solid transparent;
+    color: var(--text-dim);
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: all 0.15s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .nav-btn:hover { color: var(--text); border-color: var(--border); }
+  .nav-btn.active {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: rgba(232,255,71,0.06);
+  }
+
+  /* MAIN */
+  main { padding: 24px; max-width: 960px; margin: 0 auto; }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* WORKOUT PANEL */
+  .today-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+
+  .summary-card .label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+
+  .summary-card .value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .progress-bar-wrap {
+    margin-top: 8px;
+    background: var(--border);
+    border-radius: 2px;
+    height: 3px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.4s ease;
+  }
+
+  .exercise-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+
+  .exercise-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .exercise-card:hover { border-color: #3a3a3a; }
+
+  .exercise-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .exercise-name {
+    font-weight: 600;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .exercise-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 2px;
+    background: var(--surface2);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+
+  .exercise-actions { display: flex; gap: 6px; }
+
+  .icon-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    width: 28px; height: 28px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+
+  .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .icon-btn.danger:hover { border-color: var(--red); color: var(--red); }
+
+  .sets-table {
+    padding: 0 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .set-row {
+    display: grid;
+    grid-template-columns: 32px 1fr 1fr 1fr auto;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .set-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    text-align: center;
+  }
+
+  .set-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 7px 10px;
+    border-radius: var(--radius);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    width: 100%;
+    transition: border-color 0.15s;
+    -moz-appearance: textfield;
+  }
+
+  .set-input::-webkit-outer-spin-button,
+  .set-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  .set-input:focus { outline: none; border-color: var(--accent); }
+  .set-input::placeholder { color: var(--text-dim); }
+
+  .set-done-btn {
+    width: 28px; height: 28px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .set-done-btn.done {
+    background: var(--green);
+    border-color: var(--green);
+    color: #000;
+  }
+
+  .add-set-btn {
+    background: none;
+    border: 1px dashed var(--border);
+    color: var(--text-dim);
+    padding: 7px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    width: 100%;
+    margin-top: 4px;
+    transition: all 0.15s;
+  }
+
+  .add-set-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .set-labels {
+    display: grid;
+    grid-template-columns: 32px 1fr 1fr 1fr auto;
+    gap: 8px;
+    padding: 0 16px 6px;
+  }
+
+  .set-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    text-align: center;
+  }
+
+  /* Action buttons */
+  .btn-row { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+
+  .btn {
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    border: none;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+    font-weight: 600;
+  }
+  .btn-primary:hover { background: #d4eb30; }
+
+  .btn-secondary {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--text-dim); }
+
+  .btn-danger {
+    background: none;
+    color: var(--red);
+    border: 1px solid var(--red);
+  }
+  .btn-danger:hover { background: rgba(255,68,68,0.1); }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-dim);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+  }
+
+  .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .modal-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+    color: var(--accent);
+  }
+
+  .form-group { margin-bottom: 14px; }
+
+  .form-label {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+
+  .form-input, .form-select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 9px 12px;
+    border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    transition: border-color 0.15s;
+  }
+
+  .form-input:focus, .form-select:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .form-select { appearance: none; cursor: pointer; }
+
+  /* HISTORY */
+  .history-date-group { margin-bottom: 24px; }
+
+  .history-date-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .history-workout-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+
+  .history-workout-card:hover { border-color: #3a3a3a; }
+
+  .history-workout-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .history-workout-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .history-detail {
+    margin-top: 12px;
+    display: none;
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+  }
+
+  .history-detail.open { display: block; }
+
+  .history-exercise-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .history-exercise-row:last-child { border-bottom: none; }
+
+  /* EXERCISES PANEL */
+  .exercise-library-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .exercise-library-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: border-color 0.2s;
+  }
+
+  .exercise-library-item:hover { border-color: #3a3a3a; }
+
+  .exercise-library-name { font-weight: 500; }
+
+  .exercise-library-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  /* ANALYTICS */
+  .analytics-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .analytics-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+
+  .analytics-card .label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+
+  .analytics-card .value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .analytics-card .unit {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-left: 4px;
+  }
+
+  /* MINI CHART */
+  .mini-chart { width: 100%; height: 80px; position: relative; overflow: hidden; }
+
+  .chart-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 100%;
+  }
+
+  .chart-bar {
+    flex: 1;
+    background: var(--accent);
+    opacity: 0.7;
+    border-radius: 2px 2px 0 0;
+    min-height: 4px;
+    transition: opacity 0.2s;
+  }
+
+  .chart-bar:hover { opacity: 1; }
+
+  /* TEMPLATES */
+  .template-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .template-name { font-weight: 600; }
+  .template-exercises {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 3px;
+  }
+
+  /* TOAST */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 18px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 1px;
+    z-index: 999;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast.success { border-color: var(--green); color: var(--green); }
+  #toast.error { border-color: var(--red); color: var(--red); }
+
+  /* CONFIG BANNER */
+  #config-banner {
+    background: rgba(255,107,53,0.1);
+    border-bottom: 1px solid rgba(255,107,53,0.3);
+    padding: 10px 24px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  #config-banner input {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,107,53,0.4);
+    color: var(--text);
+    padding: 4px 8px;
+    border-radius: var(--radius);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+  }
+
+  #config-banner input.wide { width: 220px; }
+  #config-banner input.narrow { width: 130px; }
+  #config-banner input:focus { outline: none; border-color: var(--accent2); }
+  #config-banner.hidden { display: none; }
+
+  .set-labels .set-label:last-child { visibility: hidden; }
+
+  @media (max-width: 600px) {
+    .today-summary { grid-template-columns: 1fr 1fr; }
+    .analytics-grid { grid-template-columns: 1fr; }
+    .set-row { grid-template-columns: 28px 1fr 1fr 1fr auto; }
+  }
+</style>
+</head>
+<body>
+
+<div id="config-banner">
+  ⚙ GITHUB:
+  <input type="text" id="gh-owner" class="narrow" placeholder="username" />
+  /
+  <input type="text" id="gh-repo" class="narrow" placeholder="repo-name" />
+  <input type="password" id="gh-token" class="wide" placeholder="ghp_... (Personal Access Token)" />
+  <button class="btn btn-secondary" style="padding:4px 10px;font-size:10px;" onclick="saveGithubConfig()">SAVE</button>
+  <span id="api-test-result" style="margin-left:4px;"></span>
+  <span style="margin-left:auto;opacity:0.6;cursor:pointer" onclick="document.getElementById('config-banner').classList.toggle('hidden')">✕</span>
+</div>
+
+<header>
+  <div class="logo">GYM TRACKER</div>
+  <div class="sync-status">
+    <div class="sync-dot" id="sync-dot"></div>
+    <span id="sync-label">LOCAL</span>
+  </div>
+</header>
+
+<nav>
+  <button class="nav-btn active" data-panel="workout" onclick="switchPanel('workout', this)">💪 Workout</button>
+  <button class="nav-btn" data-panel="history" onclick="switchPanel('history', this)">📊 History</button>
+  <button class="nav-btn" data-panel="exercises" onclick="switchPanel('exercises', this)">⚙️ Exercises</button>
+  <button class="nav-btn" data-panel="templates" onclick="switchPanel('templates', this)">📋 Templates</button>
+  <button class="nav-btn" data-panel="analytics" onclick="switchPanel('analytics', this)">📈 Analytics</button>
+</nav>
+
+<main>
+
+  <!-- WORKOUT PANEL -->
+  <div class="panel active" id="panel-workout">
+    <div class="today-summary">
+      <div class="summary-card">
+        <div class="label">Exercises</div>
+        <div class="value" id="stat-exercises">0</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Completed Sets</div>
+        <div class="value" id="stat-sets">0</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Progress</div>
+        <div class="value" id="stat-progress">0%</div>
+        <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <div class="exercise-list" id="exercise-list">
+      <div class="empty-state" id="empty-workout">
+        <div class="icon">💪</div>
+        <p>Add your first exercise to start tracking</p>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="openModal('add-exercise-modal')">+ ADD EXERCISE</button>
+      <button class="btn btn-secondary" onclick="saveWorkout()">💾 SAVE WORKOUT</button>
+      <button class="btn btn-secondary" onclick="openModal('load-template-modal')">📋 LOAD TEMPLATE</button>
+      <button class="btn btn-danger" onclick="clearWorkout()">✕ CLEAR</button>
+    </div>
+  </div>
+
+  <!-- HISTORY PANEL -->
+  <div class="panel" id="panel-history">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--accent)">WORKOUT HISTORY</div>
+      <button class="btn btn-danger" onclick="clearHistory()">✕ CLEAR ALL</button>
+    </div>
+    <div id="history-list">
+      <div class="empty-state">
+        <div class="icon">📊</div>
+        <p>No workouts saved yet</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXERCISES PANEL -->
+  <div class="panel" id="panel-exercises">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--accent)">EXERCISE LIBRARY</div>
+      <button class="btn btn-primary" onclick="openModal('add-exercise-library-modal')">+ ADD EXERCISE</button>
+    </div>
+    <div class="exercise-library-list" id="exercise-library-list"></div>
+  </div>
+
+  <!-- TEMPLATES PANEL -->
+  <div class="panel" id="panel-templates">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--accent)">TEMPLATES</div>
+      <button class="btn btn-primary" onclick="saveTemplate()">💾 SAVE CURRENT AS TEMPLATE</button>
+    </div>
+    <div id="template-list">
+      <div class="empty-state">
+        <div class="icon">📋</div>
+        <p>No templates saved yet</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANALYTICS PANEL -->
+  <div class="panel" id="panel-analytics">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--accent);margin-bottom:20px;">ANALYTICS</div>
+    <div class="analytics-controls">
+      <select class="form-select" style="max-width:200px;" id="analytics-exercise-select" onchange="renderAnalytics()">
+        <option value="">— Select Exercise —</option>
+      </select>
+    </div>
+    <div id="analytics-content">
+      <div class="empty-state">
+        <div class="icon">📈</div>
+        <p>Select an exercise to view analytics</p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- MODALS -->
+
+<!-- Add Exercise to Workout -->
+<div class="modal-overlay" id="add-exercise-modal">
+  <div class="modal">
+    <div class="modal-title">ADD EXERCISE</div>
+    <div class="form-group">
+      <label class="form-label">Exercise</label>
+      <select class="form-select" id="exercise-select"></select>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="addExerciseToWorkout()">ADD</button>
+      <button class="btn btn-secondary" onclick="closeModal('add-exercise-modal')">CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Exercise to Library -->
+<div class="modal-overlay" id="add-exercise-library-modal">
+  <div class="modal">
+    <div class="modal-title">NEW EXERCISE</div>
+    <div class="form-group">
+      <label class="form-label">Name</label>
+      <input class="form-input" id="new-exercise-name" placeholder="e.g. Bench Press" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Muscle Group</label>
+      <select class="form-select" id="new-exercise-muscle">
+        <option>Chest</option><option>Back</option><option>Shoulders</option>
+        <option>Biceps</option><option>Triceps</option><option>Legs</option>
+        <option>Core</option><option>Full Body</option><option>Cardio</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Type</label>
+      <select class="form-select" id="new-exercise-type">
+        <option value="weighted">Weighted (reps × weight)</option>
+        <option value="bodyweight">Bodyweight (reps only)</option>
+        <option value="cardio">Cardio (time × distance)</option>
+      </select>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="addExerciseToLibrary()">SAVE</button>
+      <button class="btn btn-secondary" onclick="closeModal('add-exercise-library-modal')">CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<!-- Load Template -->
+<div class="modal-overlay" id="load-template-modal">
+  <div class="modal">
+    <div class="modal-title">LOAD TEMPLATE</div>
+    <div id="load-template-list" style="margin-bottom:16px;"></div>
+    <button class="btn btn-secondary" onclick="closeModal('load-template-modal')">CANCEL</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ===== STATE =====
+let state = {
+  exercises: [],
+  workout: [],
+  history: [],
+  templates: []
+};
+
+// GitHub config (stored in localStorage, never committed)
+let ghConfig = null;
+let ghFileSha = null; // needed to update an existing file via GitHub API
+let syncEnabled = false;
+
+const DATA_PATH = 'gym-data.json';
+const GH_API = 'https://api.github.com';
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', async () => {
+  const saved = localStorage.getItem('gym_gh_config');
+  if (saved) {
+    ghConfig = JSON.parse(saved);
+    document.getElementById('gh-owner').value = ghConfig.owner;
+    document.getElementById('gh-repo').value = ghConfig.repo;
+    document.getElementById('gh-token').value = ghConfig.token;
+    document.getElementById('config-banner').classList.add('hidden');
+  }
+
+  loadLocal();
+  await trySync();
+  render();
+});
+
+function loadLocal() {
+  try {
+    const saved = localStorage.getItem('gym_state');
+    if (saved) state = { ...state, ...JSON.parse(saved) };
+  } catch(e) {}
+}
+
+function saveLocal() {
+  localStorage.setItem('gym_state', JSON.stringify(state));
+}
+
+// ===== GITHUB CONFIG =====
+function saveGithubConfig() {
+  const owner = document.getElementById('gh-owner').value.trim();
+  const repo  = document.getElementById('gh-repo').value.trim();
+  const token = document.getElementById('gh-token').value.trim();
+  if (!owner || !repo || !token) { toast('Fill in all three fields', 'error'); return; }
+  ghConfig = { owner, repo, token };
+  localStorage.setItem('gym_gh_config', JSON.stringify(ghConfig));
+  trySync();
+}
+
+function ghHeaders() {
+  return {
+    'Authorization': `Bearer ${ghConfig.token}`,
+    'Accept': 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+    'Content-Type': 'application/json'
+  };
+}
+
+// ===== SYNC =====
+async function trySync() {
+  if (!ghConfig) { updateSyncStatus('local'); return; }
+  updateSyncStatus('syncing');
+  const result = document.getElementById('api-test-result');
+  try {
+    const res = await fetch(
+      `${GH_API}/repos/${ghConfig.owner}/${ghConfig.repo}/contents/${DATA_PATH}`,
+      { headers: ghHeaders() }
+    );
+
+    if (res.status === 404) {
+      // File doesn't exist yet — create it
+      syncEnabled = true;
+      updateSyncStatus('online');
+      await pushToGitHub(); // creates the file
+      result.textContent = '✓ created';
+      result.style.color = 'var(--green)';
+      return;
+    }
+
+    if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
+
+    const file = await res.json();
+    ghFileSha = file.sha;
+
+    // Decode content (base64 → JSON)
+    const decoded = JSON.parse(atob(file.content.replace(/\n/g, '')));
+    if (decoded.exercises) state.exercises = decoded.exercises;
+    if (decoded.history)   state.history   = decoded.history;
+    if (decoded.templates) state.templates = decoded.templates;
+    saveLocal();
+    syncEnabled = true;
+    updateSyncStatus('online');
+    render();
+    result.textContent = '✓ synced';
+    result.style.color = 'var(--green)';
+    document.getElementById('config-banner').classList.add('hidden');
+  } catch(e) {
+    syncEnabled = false;
+    updateSyncStatus('error');
+    result.textContent = '✗ ' + (e.message || 'failed');
+    result.style.color = 'var(--red)';
+    console.error(e);
+  }
+}
+
+async function pushToGitHub() {
+  if (!ghConfig) return;
+  updateSyncStatus('syncing');
+  try {
+    const payload = { exercises: state.exercises, history: state.history, templates: state.templates };
+    const content = btoa(JSON.stringify(payload, null, 2));
+    const body = {
+      message: `update workout data ${new Date().toISOString()}`,
+      content,
+      ...(ghFileSha ? { sha: ghFileSha } : {})
+    };
+
+    const res = await fetch(
+      `${GH_API}/repos/${ghConfig.owner}/${ghConfig.repo}/contents/${DATA_PATH}`,
+      { method: 'PUT', headers: ghHeaders(), body: JSON.stringify(body) }
+    );
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || res.status);
+    }
+
+    const data = await res.json();
+    ghFileSha = data.content.sha; // update sha for next write
+    updateSyncStatus('online');
+  } catch(e) {
+    updateSyncStatus('error');
+    toast('GitHub sync failed – saved locally', 'error');
+    console.error(e);
+  }
+}
+
+// Keep pushToServer as alias so all existing call sites work
+async function pushToServer() {
+  saveLocal();
+  await pushToGitHub();
+}
+
+function updateSyncStatus(status) {
+  const dot = document.getElementById('sync-dot');
+  const label = document.getElementById('sync-label');
+  dot.className = 'sync-dot ' + status;
+  label.textContent = { online: 'SYNCED', syncing: 'SYNCING', error: 'OFFLINE', local: 'LOCAL' }[status] || 'LOCAL';
+}
+
+// ===== PANEL SWITCH =====
+function switchPanel(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'analytics') renderAnalytics();
+  if (name === 'history') renderHistory();
+}
+
+// ===== RENDER =====
+function render() {
+  renderWorkout();
+  renderExerciseLibrary();
+  renderTemplates();
+  populateExerciseSelects();
+}
+
+function renderWorkout() {
+  const list = document.getElementById('exercise-list');
+  const empty = document.getElementById('empty-workout');
+
+  if (state.workout.length === 0) {
+    empty.style.display = 'block';
+    list.innerHTML = '';
+    list.appendChild(empty);
+  } else {
+    empty.style.display = 'none';
+    list.innerHTML = '';
+    state.workout.forEach((ex, i) => {
+      list.appendChild(buildExerciseCard(ex, i));
+    });
+  }
+
+  updateStats();
+}
+
+function buildExerciseCard(ex, idx) {
+  const card = document.createElement('div');
+  card.className = 'exercise-card';
+
+  const totalSets = ex.sets.length;
+  const doneSets = ex.sets.filter(s => s.done).length;
+
+  card.innerHTML = `
+    <div class="exercise-header">
+      <div class="exercise-name">
+        ${ex.name}
+        <span class="exercise-badge">${ex.muscle}</span>
+        <span class="exercise-badge" style="color:var(--accent2);border-color:var(--accent2)">${doneSets}/${totalSets} sets</span>
+      </div>
+      <div class="exercise-actions">
+        <button class="icon-btn" onclick="addSet(${idx})" title="Add set">+</button>
+        <button class="icon-btn danger" onclick="removeExercise(${idx})" title="Remove">✕</button>
+      </div>
+    </div>
+    <div class="set-labels">
+      <span class="set-label">#</span>
+      <span class="set-label">${ex.type === 'cardio' ? 'MIN' : 'REPS'}</span>
+      <span class="set-label">${ex.type === 'cardio' ? 'KM' : ex.type === 'bodyweight' ? 'NOTES' : 'KG'}</span>
+      <span class="set-label">PREV</span>
+      <span class="set-label">✓</span>
+    </div>
+    <div class="sets-table" id="sets-${idx}"></div>
+  `;
+
+  const setsDiv = card.querySelector(`#sets-${idx}`);
+  ex.sets.forEach((set, si) => {
+    setsDiv.appendChild(buildSetRow(idx, si, ex, set));
+  });
+
+  const addBtn = document.createElement('div');
+  addBtn.style.padding = '0 16px 14px';
+  addBtn.innerHTML = `<button class="add-set-btn" onclick="addSet(${idx})">+ ADD SET</button>`;
+  card.appendChild(addBtn);
+
+  return card;
+}
+
+function buildSetRow(exIdx, setIdx, ex, set) {
+  const row = document.createElement('div');
+  row.className = 'set-row';
+  row.id = `set-row-${exIdx}-${setIdx}`;
+
+  const prev = getPreviousSet(ex.name, setIdx);
+  const prevText = prev ? `${prev.reps}×${prev.weight}` : '—';
+
+  row.innerHTML = `
+    <div class="set-num">${setIdx + 1}</div>
+    <input class="set-input" type="number" min="0" placeholder="${ex.type === 'cardio' ? '30' : '10'}"
+      value="${set.reps || ''}" onchange="updateSet(${exIdx},${setIdx},'reps',this.value)" />
+    <input class="set-input" type="number" min="0" step="0.5" placeholder="${ex.type === 'bodyweight' ? '—' : '0'}"
+      value="${set.weight || ''}" ${ex.type === 'bodyweight' ? 'disabled style="opacity:0.3"' : ''}
+      onchange="updateSet(${exIdx},${setIdx},'weight',this.value)" />
+    <div class="set-num" style="font-size:10px;color:var(--text-dim)">${prevText}</div>
+    <button class="set-done-btn ${set.done ? 'done' : ''}" onclick="toggleSetDone(${exIdx},${setIdx})">✓</button>
+  `;
+
+  return row;
+}
+
+function getPreviousSet(name, setIdx) {
+  for (let i = state.history.length - 1; i >= 0; i--) {
+    const w = state.history[i];
+    const ex = w.exercises.find(e => e.name === name);
+    if (ex && ex.sets[setIdx]) return ex.sets[setIdx];
+  }
+  return null;
+}
+
+function updateStats() {
+  const total = state.workout.reduce((a, ex) => a + ex.sets.length, 0);
+  const done = state.workout.reduce((a, ex) => a + ex.sets.filter(s => s.done).length, 0);
+  const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+
+  document.getElementById('stat-exercises').textContent = state.workout.length;
+  document.getElementById('stat-sets').textContent = done;
+  document.getElementById('stat-progress').textContent = pct + '%';
+  document.getElementById('progress-bar').style.width = pct + '%';
+}
+
+function renderExerciseLibrary() {
+  const list = document.getElementById('exercise-library-list');
+  list.innerHTML = '';
+
+  if (state.exercises.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">⚙️</div><p>No exercises yet. Add some!</p></div>`;
+    return;
+  }
+
+  state.exercises.forEach((ex, i) => {
+    const item = document.createElement('div');
+    item.className = 'exercise-library-item';
+    item.innerHTML = `
+      <div>
+        <div class="exercise-library-name">${ex.name}</div>
+        <div class="exercise-library-meta">${ex.muscle} · ${ex.type}</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="icon-btn danger" onclick="deleteExercise(${i})">✕</button>
+      </div>
+    `;
+    list.appendChild(item);
+  });
+}
+
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  list.innerHTML = '';
+
+  if (state.history.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">📊</div><p>No workouts saved yet</p></div>`;
+    return;
+  }
+
+  // Group by date
+  const groups = {};
+  [...state.history].reverse().forEach(w => {
+    const d = new Date(w.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    if (!groups[d]) groups[d] = [];
+    groups[d].push(w);
+  });
+
+  Object.entries(groups).forEach(([date, workouts]) => {
+    const group = document.createElement('div');
+    group.className = 'history-date-group';
+    group.innerHTML = `<div class="history-date-label">${date}</div>`;
+
+    workouts.forEach((w, wi) => {
+      const card = document.createElement('div');
+      card.className = 'history-workout-card';
+      const totalVol = w.exercises.reduce((a, ex) => a + ex.sets.reduce((b, s) => b + ((s.reps || 0) * (s.weight || 1)), 0), 0);
+      const time = new Date(w.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+      card.innerHTML = `
+        <div class="history-workout-title">
+          <span>${w.name || 'Workout'}</span>
+          <span style="font-size:12px;color:var(--text-dim)">${time}</span>
+        </div>
+        <div class="history-workout-meta">
+          ${w.exercises.length} exercises · ${w.exercises.reduce((a,e) => a + e.sets.length, 0)} sets · ${totalVol.toFixed(0)} kg total vol
+        </div>
+        <div class="history-detail" id="hd-${w.id}">
+          ${w.exercises.map(ex => `
+            <div class="history-exercise-row">
+              <span>${ex.name}</span>
+              <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim)">${ex.sets.map(s => s.done ? `${s.reps}×${s.weight || '–'}` : '–').join(', ')}</span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      card.addEventListener('click', () => {
+        const det = document.getElementById('hd-' + w.id);
+        det.classList.toggle('open');
+      });
+
+      group.appendChild(card);
+    });
+
+    list.appendChild(group);
+  });
+}
+
+function renderTemplates() {
+  const list = document.getElementById('template-list');
+  list.innerHTML = '';
+
+  if (state.templates.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>No templates saved yet</p></div>`;
+    return;
+  }
+
+  state.templates.forEach((t, i) => {
+    const card = document.createElement('div');
+    card.className = 'template-card';
+    card.innerHTML = `
+      <div>
+        <div class="template-name">${t.name}</div>
+        <div class="template-exercises">${t.exercises.map(e => e.name).join(' · ')}</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-secondary" style="padding:6px 12px;font-size:11px" onclick="loadTemplate(${i})">LOAD</button>
+        <button class="icon-btn danger" onclick="deleteTemplate(${i})">✕</button>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+
+  // Also update load-template modal
+  const ltList = document.getElementById('load-template-list');
+  ltList.innerHTML = '';
+  if (state.templates.length === 0) {
+    ltList.innerHTML = '<p style="color:var(--text-dim);font-size:13px">No templates saved yet.</p>';
+  } else {
+    state.templates.forEach((t, i) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)';
+      row.innerHTML = `
+        <div>
+          <div style="font-weight:500">${t.name}</div>
+          <div style="font-size:11px;color:var(--text-dim);font-family:DM Mono">${t.exercises.map(e => e.name).join(' · ')}</div>
+        </div>
+        <button class="btn btn-primary" style="padding:6px 12px;font-size:11px" onclick="loadTemplate(${i});closeModal('load-template-modal')">LOAD</button>
+      `;
+      ltList.appendChild(row);
+    });
+  }
+}
+
+function populateExerciseSelects() {
+  const sel = document.getElementById('exercise-select');
+  const ana = document.getElementById('analytics-exercise-select');
+  sel.innerHTML = state.exercises.map(e => `<option value="${e.name}">${e.name} (${e.muscle})</option>`).join('');
+  if (state.exercises.length === 0) sel.innerHTML = '<option value="">No exercises — add some first</option>';
+
+  ana.innerHTML = '<option value="">— Select Exercise —</option>' +
+    [...new Set(state.history.flatMap(w => w.exercises.map(e => e.name)))]
+      .sort().map(n => `<option value="${n}">${n}</option>`).join('');
+}
+
+// ===== ANALYTICS =====
+function renderAnalytics() {
+  const name = document.getElementById('analytics-exercise-select').value;
+  const div = document.getElementById('analytics-content');
+
+  if (!name) {
+    div.innerHTML = `<div class="empty-state"><div class="icon">📈</div><p>Select an exercise to view analytics</p></div>`;
+    return;
+  }
+
+  const data = [];
+  state.history.forEach(w => {
+    const ex = w.exercises.find(e => e.name === name);
+    if (!ex) return;
+    const doneSets = ex.sets.filter(s => s.done);
+    if (!doneSets.length) return;
+    const maxW = Math.max(...doneSets.map(s => s.weight || 0));
+    const vol = doneSets.reduce((a, s) => a + (s.reps || 0) * (s.weight || 1), 0);
+    const reps = doneSets.reduce((a, s) => a + (s.reps || 0), 0);
+    data.push({ date: w.date, maxW, vol, reps, sets: doneSets.length });
+  });
+
+  if (!data.length) {
+    div.innerHTML = `<div class="empty-state"><div class="icon">📈</div><p>No history for this exercise yet</p></div>`;
+    return;
+  }
+
+  const maxWeight = Math.max(...data.map(d => d.maxW));
+  const totalVol = data.reduce((a, d) => a + d.vol, 0);
+  const totalReps = data.reduce((a, d) => a + d.reps, 0);
+  const pr = maxWeight;
+
+  div.innerHTML = `
+    <div class="analytics-grid">
+      <div class="analytics-card">
+        <div class="label">Personal Record</div>
+        <div class="value">${pr}<span class="unit">kg</span></div>
+      </div>
+      <div class="analytics-card">
+        <div class="label">Total Volume</div>
+        <div class="value">${(totalVol/1000).toFixed(1)}<span class="unit">t</span></div>
+      </div>
+      <div class="analytics-card">
+        <div class="label">Total Reps</div>
+        <div class="value">${totalReps}</div>
+      </div>
+      <div class="analytics-card">
+        <div class="label">Sessions</div>
+        <div class="value">${data.length}</div>
+      </div>
+    </div>
+
+    <div class="analytics-card">
+      <div class="label" style="margin-bottom:12px">Max Weight Over Time</div>
+      <div class="mini-chart">
+        <div class="chart-bars">
+          ${data.slice(-20).map(d => {
+            const h = Math.max(10, (d.maxW / maxWeight) * 100);
+            return `<div class="chart-bar" style="height:${h}%" title="${new Date(d.date).toLocaleDateString()}: ${d.maxW}kg"></div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ===== WORKOUT ACTIONS =====
+function addExerciseToWorkout() {
+  const name = document.getElementById('exercise-select').value;
+  if (!name) { toast('No exercise selected', 'error'); return; }
+  const ex = state.exercises.find(e => e.name === name);
+  if (!ex) return;
+
+  state.workout.push({
+    name: ex.name,
+    muscle: ex.muscle,
+    type: ex.type,
+    sets: [{ reps: '', weight: '', done: false }]
+  });
+
+  closeModal('add-exercise-modal');
+  renderWorkout();
+}
+
+function removeExercise(idx) {
+  state.workout.splice(idx, 1);
+  renderWorkout();
+}
+
+function addSet(exIdx) {
+  state.workout[exIdx].sets.push({ reps: '', weight: '', done: false });
+  renderWorkout();
+}
+
+function updateSet(exIdx, setIdx, field, value) {
+  state.workout[exIdx].sets[setIdx][field] = parseFloat(value) || value;
+  updateStats();
+}
+
+function toggleSetDone(exIdx, setIdx) {
+  state.workout[exIdx].sets[setIdx].done = !state.workout[exIdx].sets[setIdx].done;
+  renderWorkout();
+}
+
+async function saveWorkout() {
+  if (state.workout.length === 0) { toast('No exercises to save', 'error'); return; }
+  const workout = {
+    id: Date.now(),
+    date: new Date().toISOString(),
+    name: new Date().toLocaleDateString('en-US', { weekday: 'long' }) + ' Workout',
+    exercises: state.workout.map(ex => ({ ...ex, sets: ex.sets.map(s => ({...s})) }))
+  };
+  state.history.push(workout);
+  saveLocal();
+  await pushToServer();
+  toast('Workout saved!', 'success');
+}
+
+function clearWorkout() {
+  if (!confirm('Clear current workout?')) return;
+  state.workout = [];
+  renderWorkout();
+}
+
+// ===== EXERCISE LIBRARY =====
+function addExerciseToLibrary() {
+  const name = document.getElementById('new-exercise-name').value.trim();
+  if (!name) { toast('Enter a name', 'error'); return; }
+  if (state.exercises.find(e => e.name.toLowerCase() === name.toLowerCase())) {
+    toast('Exercise already exists', 'error'); return;
+  }
+  state.exercises.push({
+    name,
+    muscle: document.getElementById('new-exercise-muscle').value,
+    type: document.getElementById('new-exercise-type').value
+  });
+  document.getElementById('new-exercise-name').value = '';
+  closeModal('add-exercise-library-modal');
+  saveLocal();
+  pushToServer();
+  renderExerciseLibrary();
+  populateExerciseSelects();
+  toast('Exercise added', 'success');
+}
+
+function deleteExercise(idx) {
+  if (!confirm('Delete this exercise?')) return;
+  state.exercises.splice(idx, 1);
+  saveLocal();
+  pushToServer();
+  renderExerciseLibrary();
+  populateExerciseSelects();
+}
+
+// ===== HISTORY =====
+async function clearHistory() {
+  if (!confirm('Clear all workout history? This cannot be undone.')) return;
+  state.history = [];
+  saveLocal();
+  await pushToServer();
+  renderHistory();
+  toast('History cleared', 'success');
+}
+
+// ===== TEMPLATES =====
+function saveTemplate() {
+  if (state.workout.length === 0) { toast('Add exercises to save a template', 'error'); return; }
+  const name = prompt('Template name:');
+  if (!name) return;
+  state.templates.push({
+    id: Date.now(),
+    name,
+    exercises: state.workout.map(ex => ({ name: ex.name, muscle: ex.muscle, type: ex.type }))
+  });
+  saveLocal();
+  pushToServer();
+  renderTemplates();
+  toast('Template saved', 'success');
+}
+
+function loadTemplate(idx) {
+  const t = state.templates[idx];
+  state.workout = t.exercises.map(ex => ({
+    ...ex,
+    sets: [{ reps: '', weight: '', done: false }]
+  }));
+  switchPanel('workout', document.querySelector('[data-panel="workout"]'));
+  renderWorkout();
+  toast('Template loaded', 'success');
+}
+
+function deleteTemplate(idx) {
+  if (!confirm('Delete this template?')) return;
+  state.templates.splice(idx, 1);
+  saveLocal();
+  pushToServer();
+  renderTemplates();
+}
+
+// ===== MODAL =====
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  if (id === 'add-exercise-modal') populateExerciseSelects();
+  if (id === 'load-template-modal') renderTemplates();
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => {
+    if (e.target === m) m.classList.remove('open');
+  });
+});
+
+// ===== TOAST =====
+function toast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = type === 'success' ? '✓ ' + msg : '✗ ' + msg;
+  t.className = 'show ' + type;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
