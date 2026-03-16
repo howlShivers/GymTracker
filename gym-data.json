@@ -39,6 +39,11 @@
       "name": "Bicep Curls",
       "muscle": "Biceps",
       "type": "weighted"
+    },
+    {
+      "name": "Tricep Extension",
+      "muscle": "Triceps",
+      "type": "weighted"
     }
   ],
   "history": [],
