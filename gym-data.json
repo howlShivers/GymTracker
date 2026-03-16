@@ -59,6 +59,11 @@
       "name": "Calf Raises",
       "muscle": "Legs",
       "type": "weighted"
+    },
+    {
+      "name": "Hip Thrusts",
+      "muscle": "Legs",
+      "type": "weighted"
     }
   ],
   "history": [],
